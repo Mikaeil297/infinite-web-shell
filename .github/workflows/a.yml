@@ -3,8 +3,13 @@ name: Workflow A
 
 on:
   schedule:
-    - cron: '0 0,12 * * *'   # runs at 00:00 and 12:00 UTC
-  workflow_dispatch:          # allows manual trigger
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+    inputs:
+      stop:
+        description: 'Set to "true" to stop this workflow'
+        required: false
+        default: 'false'
 
 concurrency:
   group: workflow-a
@@ -14,10 +19,16 @@ jobs:
   main-job:
     runs-on: ubuntu-latest
     steps:
+      - name: Check if stop signal received
+        if: github.event.inputs.stop == 'true'
+        run: |
+          echo "🛑 Stop signal received. Exiting workflow A."
+          exit 0
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies (Python, Flask, ngrok)
+      - name: Install dependencies
         run: |
           sudo apt-get update
           pip install flask
@@ -26,17 +37,15 @@ jobs:
           chmod +x ngrok
           ./ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
-      - name: Start Web Shell and print URL
+      - name: Start Web Shell
         run: |
           ./ngrok http 8080 > /dev/null 2>&1 &
           sleep 5
           URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-          echo "✅ Web Shell URL (active for ~6 hours): $URL"
-          echo "🔥 Open this URL in your browser. Use admin/admin123 to login."
-
+          echo "✅ Web Shell URL: $URL"
           python web_shell.py
 
-      - name: Trigger Workflow B (only if started by schedule)
+      - name: Trigger Workflow B
         if: github.event_name == 'schedule'
         run: |
           curl -L -X POST \
