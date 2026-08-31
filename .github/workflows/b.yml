@@ -1,3 +1,4 @@
+# Author: mikaeil297
 name: Workflow B
 
 on:
@@ -31,7 +32,7 @@ jobs:
           sleep 5
           URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
           echo "✅ Web Shell URL (active for ~6 hours): $URL"
-          echo "🔥 Open this URL in your browser and execute shell commands."
+          echo "🔥 Open this URL in your browser. Use admin/admin123 to login."
 
           python web_shell.py
 
