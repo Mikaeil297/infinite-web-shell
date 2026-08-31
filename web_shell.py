@@ -3,8 +3,8 @@ import os
 from flask import Flask, request, render_template_string, session, redirect, url_for, jsonify
 from functools import wraps
 import logging
-import json
 from datetime import datetime
+import json
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -13,14 +13,38 @@ app.secret_key = os.urandom(24)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Credentials from environment variables (never hardcode!)
+# Credentials from environment variables
 USERNAME = os.environ.get('WEB_USER', 'admin')
 PASSWORD = os.environ.get('WEB_PASS', 'admin123')
 PORT = int(os.environ.get('PORT', 8080))
 
-# Command history storage
+# Store command history in memory
 command_history = []
 MAX_HISTORY = 100
+history_file = os.path.expanduser('~/.web_shell_history')
+
+def load_history():
+    """Load command history from file"""
+    global command_history
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, 'r') as f:
+                command_history = json.load(f)
+        except:
+            command_history = []
+    else:
+        command_history = []
+
+def save_history():
+    """Save command history to file"""
+    try:
+        with open(history_file, 'w') as f:
+            json.dump(command_history, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save history: {e}")
+
+# Load history on startup
+load_history()
 
 LOGIN_TEMPLATE = """
 <!DOCTYPE html>
@@ -193,7 +217,7 @@ LOGIN_TEMPLATE = """
         </form>
         
         <div class="footer">
-            <p>Web Shell Terminal • Created by Mikaeil297</p>
+            <p>Web Shell Terminal - Created by Mikaeil297</p>
         </div>
     </div>
 </body>
@@ -292,10 +316,11 @@ SHELL_TEMPLATE = """
             border-radius: 10px 10px 0 0;
             overflow-y: auto;
             padding: 20px;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.6;
             white-space: pre-wrap;
             word-wrap: break-word;
+            font-family: 'Fira Code', monospace;
         }
         
         .terminal-output::-webkit-scrollbar {
@@ -318,7 +343,7 @@ SHELL_TEMPLATE = """
         
         .input-section {
             background: #0a0e27;
-            padding: 20px 30px 30px 30px;
+            padding: 20px 30px 20px 30px;
             border: 1px solid #1e3a5f;
             margin: 0 30px 20px 30px;
             border-radius: 0 0 10px 10px;
@@ -330,12 +355,14 @@ SHELL_TEMPLATE = """
             flex: 1;
             display: flex;
             gap: 10px;
+            align-items: center;
         }
         
         .prompt {
             color: #4CAF50;
             font-weight: bold;
             user-select: none;
+            font-size: 14px;
         }
         
         input[type="text"] {
@@ -345,7 +372,7 @@ SHELL_TEMPLATE = """
             color: #e0e0e0;
             padding: 12px 15px;
             border-radius: 6px;
-            font-family: inherit;
+            font-family: 'Fira Code', monospace;
             font-size: 14px;
             transition: all 0.3s;
         }
@@ -392,12 +419,22 @@ SHELL_TEMPLATE = """
             background: #e67e22;
         }
         
-        .command {
-            color: #4CAF50;
-            margin: 10px 0 5px 0;
+        button.history-btn {
+            background: #3498db;
         }
         
-        .output {
+        button.history-btn:hover {
+            background: #2980b9;
+        }
+        
+        .cmd-prompt {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-top: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .cmd-output {
             color: #e0e0e0;
             margin-bottom: 10px;
         }
@@ -416,17 +453,6 @@ SHELL_TEMPLATE = """
         
         .success {
             color: #4CAF50;
-        }
-        
-        .timestamp {
-            color: #7f8c8d;
-            font-size: 12px;
-        }
-        
-        .history-indicator {
-            color: #95a5a6;
-            font-size: 12px;
-            margin-left: 10px;
         }
         
         .shortcut-info {
@@ -453,9 +479,89 @@ SHELL_TEMPLATE = """
             border: 1px solid #2a5298;
             color: #4CAF50;
         }
+        
+        .history-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1f3a;
+            border: 2px solid #2a5298;
+            border-radius: 10px;
+            padding: 30px;
+            z-index: 1000;
+            max-width: 600px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .history-popup h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .history-item {
+            background: #0a0e27;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #2a5298;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .history-item:hover {
+            background: #202540;
+            border-left-color: #4CAF50;
+        }
+        
+        .history-item-cmd {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .history-item-time {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+        
+        .close-history {
+            float: right;
+            cursor: pointer;
+            color: #e74c3c;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .close-history:hover {
+            color: #c0392b;
+        }
     </style>
 </head>
 <body>
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="history-popup" id="history-popup">
+        <span class="close-history" onclick="closeHistory()">&times;</span>
+        <h3>Command History</h3>
+        <div id="history-list"></div>
+    </div>
+    
     <div class="container">
         <header>
             <div class="header-left">
@@ -481,14 +587,15 @@ SHELL_TEMPLATE = """
                     <div class="button-group">
                         <button type="submit">Execute</button>
                         <button type="button" class="clear-btn" onclick="clearTerminal()">Clear</button>
+                        <button type="button" class="history-btn" onclick="showHistory()">History</button>
                     </div>
                 </form>
             </div>
             
             <div class="shortcut-info">
                 <span><kbd>Enter</kbd> Execute</span>
-                <span><kbd>↑/↓</kbd> History</span>
-                <span><kbd>Ctrl+L</kbd> Clear</span>
+                <span><kbd>↑/↓</kbd> Navigate History</span>
+                <span><kbd>Ctrl+L</kbd> Clear Screen</span>
                 <span id="history-count">History: 0 commands</span>
             </div>
         </div>
@@ -497,6 +604,7 @@ SHELL_TEMPLATE = """
     <script>
         let historyIndex = -1;
         let commands = [];
+        let fullHistory = [];
         
         // Update time
         function updateTime() {
@@ -509,7 +617,9 @@ SHELL_TEMPLATE = """
         // Auto-scroll to bottom
         function scrollToBottom() {
             const terminal = document.getElementById('terminal-output');
-            terminal.scrollTop = terminal.scrollHeight;
+            setTimeout(() => {
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 100);
         }
         
         // Clear terminal
@@ -522,55 +632,104 @@ SHELL_TEMPLATE = """
             }
         }
         
+        // Show history popup
+        function showHistory() {
+            fetch('/api/history')
+                .then(r => r.json())
+                .then(data => {
+                    const historyList = document.getElementById('history-list');
+                    historyList.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        historyList.innerHTML = '<div class="info">No commands in history</div>';
+                    } else {
+                        data.reverse().forEach((item, index) => {
+                            const div = document.createElement('div');
+                            div.className = 'history-item';
+                            const time = new Date(item.timestamp).toLocaleString();
+                            div.innerHTML = `
+                                <div class="history-item-cmd">$ ${item.command}</div>
+                                <div class="history-item-time">${time}</div>
+                            `;
+                            div.onclick = () => {
+                                document.getElementById('cmd-input').value = item.command;
+                                closeHistory();
+                                document.getElementById('cmd-input').focus();
+                            };
+                            historyList.appendChild(div);
+                        });
+                    }
+                    
+                    document.getElementById('history-popup').style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
+                });
+        }
+        
+        // Close history popup
+        function closeHistory() {
+            document.getElementById('history-popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+        
         // Update history count
         function updateHistoryCount() {
-            document.getElementById('history-count').textContent = 'History: ' + commands.length + ' commands';
+            fetch('/api/history')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('history-count').textContent = 'History: ' + data.length + ' commands';
+                });
         }
         
         // Keyboard shortcuts
         document.getElementById('cmd-input').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                document.getElementById('command-form').submit();
+                const cmd = this.value.trim();
+                if (cmd) {
+                    document.getElementById('command-form').submit();
+                    setTimeout(() => {
+                        updateHistoryCount();
+                        scrollToBottom();
+                    }, 200);
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (historyIndex < commands.length - 1) {
-                    historyIndex++;
-                    this.value = commands[commands.length - 1 - historyIndex];
-                }
+                fetch('/api/history')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            if (historyIndex < data.length - 1) {
+                                historyIndex++;
+                                this.value = data[data.length - 1 - historyIndex].command;
+                            }
+                        }
+                    });
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    this.value = commands[commands.length - 1 - historyIndex];
-                } else if (historyIndex === 0) {
-                    historyIndex = -1;
-                    this.value = '';
-                }
+                fetch('/api/history')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (historyIndex > 0) {
+                            historyIndex--;
+                            this.value = data[data.length - 1 - historyIndex].command;
+                        } else if (historyIndex === 0) {
+                            historyIndex = -1;
+                            this.value = '';
+                        }
+                    });
             } else if (e.ctrlKey && e.key === 'l') {
                 e.preventDefault();
                 clearTerminal();
             }
         });
         
-        // Store command
-        document.getElementById('command-form').addEventListener('submit', function(e) {
-            const cmd = document.getElementById('cmd-input').value.trim();
-            if (cmd && commands[commands.length - 1] !== cmd) {
-                commands.push(cmd);
-                if (commands.length > 100) commands.shift();
-            }
-            historyIndex = -1;
-            updateHistoryCount();
-        });
+        // Close popup with overlay click
+        document.getElementById('overlay').addEventListener('click', closeHistory);
         
-        // Scroll on page load
+        // Load history on page load
         window.addEventListener('load', function() {
             scrollToBottom();
             updateHistoryCount();
         });
-        
-        // Scroll after form submission
-        setTimeout(scrollToBottom, 100);
     </script>
 </body>
 </html>
@@ -614,7 +773,7 @@ def logout():
 @login_required
 def index():
     """Main shell interface"""
-    output = '<span class="success">✓ Ready to execute commands...</span>\n'
+    output = '<span class="success">✓ Terminal ready for commands...</span>\n'
     
     if request.method == 'POST':
         cmd = request.form.get('cmd', '').strip()
@@ -623,48 +782,83 @@ def index():
             output = '<span class="warning">⚠ Please enter a command!</span>'
         else:
             try:
-                # Add command to history
-                command_history.append({
-                    'command': cmd,
-                    'timestamp': datetime.now().isoformat()
-                })
-                if len(command_history) > MAX_HISTORY:
-                    command_history.pop(0)
-                
-                # Execute command with timeout for safety
+                # Execute command with timeout
                 result = subprocess.run(
                     cmd,
                     shell=True,
                     capture_output=True,
                     text=True,
-                    timeout=60,
+                    timeout=120,
                     cwd=os.path.expanduser('~')
                 )
                 
+                # Format output
                 timestamp = datetime.now().strftime('%H:%M:%S')
-                output = f'<span class="command">$ {cmd}</span>\n'
+                output = f'<span class="cmd-prompt">$ {cmd}</span>\n'
                 
+                # Add stdout if exists
                 if result.stdout:
-                    output += f'<span class="output">{result.stdout}</span>'
+                    output += f'<span class="cmd-output">{result.stdout}</span>'
                 
+                # Add stderr if exists
                 if result.stderr:
                     output += f'<span class="error">{result.stderr}</span>'
                 
+                # Message if no output
                 if not result.stdout and not result.stderr:
-                    output += '<span class="success">✓ Command executed successfully</span>'
+                    output += '<span class="success">✓ Command completed successfully</span>'
                 
+                # Add to history
+                command_history.append({
+                    'command': cmd,
+                    'timestamp': datetime.now().isoformat(),
+                    'output': result.stdout + result.stderr
+                })
+                
+                if len(command_history) > MAX_HISTORY:
+                    command_history.pop(0)
+                
+                save_history()
                 logger.info(f"Command executed: {cmd}")
             
             except subprocess.TimeoutExpired:
-                output = '<span class="error">✗ Command timed out (max 60 seconds)!</span>'
+                output = '<span class="error">✗ Command timed out (maximum 120 seconds)</span>'
+                command_history.append({
+                    'command': cmd,
+                    'timestamp': datetime.now().isoformat(),
+                    'output': 'TIMEOUT'
+                })
+                save_history()
                 logger.warning(f"Command timeout: {cmd}")
             
             except FileNotFoundError as e:
-                output = f'<span class="error">✗ Command not found: {str(e)}</span>'
+                output = f'<span class="error">✗ Command not found: {cmd}</span>'
+                command_history.append({
+                    'command': cmd,
+                    'timestamp': datetime.now().isoformat(),
+                    'output': str(e)
+                })
+                save_history()
                 logger.error(f"Command not found: {cmd}")
+            
+            except PermissionError:
+                output = f'<span class="error">✗ Permission denied. Try using sudo or check permissions</span>'
+                command_history.append({
+                    'command': cmd,
+                    'timestamp': datetime.now().isoformat(),
+                    'output': 'PERMISSION_DENIED'
+                })
+                save_history()
+                logger.error(f"Permission denied: {cmd}")
             
             except Exception as e:
                 output = f'<span class="error">✗ Error: {str(e)}</span>'
+                command_history.append({
+                    'command': cmd,
+                    'timestamp': datetime.now().isoformat(),
+                    'output': str(e)
+                })
+                save_history()
                 logger.error(f"Command error: {cmd} - {str(e)}")
     
     return render_template_string(SHELL_TEMPLATE, output=output)
@@ -677,12 +871,13 @@ def get_history():
 
 @app.route('/api/clear-history', methods=['POST'])
 @login_required
-def clear_history():
+def clear_history_api():
     """Clear command history"""
     global command_history
     command_history = []
+    save_history()
     logger.info("Command history cleared")
-    return jsonify({'status': 'success'})
+    return jsonify({'status': 'success', 'message': 'History cleared'})
 
 @app.errorhandler(404)
 def not_found(error):
@@ -697,4 +892,5 @@ def internal_error(error):
 
 if __name__ == '__main__':
     logger.info(f"Starting Web Shell on port {PORT}")
+    logger.info(f"Loaded {len(command_history)} commands from history")
     app.run(host='0.0.0.0', port=PORT, debug=False)
