@@ -2,72 +2,73 @@
 
 **Created by:** [mikaeil297](https://github.com/mikaeil297)
 
-An infinite loop between two GitHub Actions workflows that triggers each other every 6 hours, cancels the previous run, and starts a **password-protected web shell** inside the runner using Flask + ngrok.
+An infinite loop between two GitHub Actions workflows (A and B) that trigger each other every 6 hours, cancel the previous run, and start a **password-protected web shell**.
+
+## 🛑 Stopping the Loop (Workflow C)
+
+- Go to the **Actions** tab.
+- Select **Workflow C - Stopper**.
+- Click **Run workflow**.
+- In the `confirm` field, type exactly: `stop`
+- Click **Run workflow** again.
+- Workflow C will:
+  1. Send a `stop` signal to **A** and **B**.
+  2. The next time A or B runs, they will exit immediately.
+  3. Workflow C cancels its own run.
+- The infinite loop is now completely stopped.
 
 ## 🔐 Default Login
 - **Username:** `admin`
 - **Password:** `admin123`
 
-*(You can override these by adding `WEB_USER` and `WEB_PASS` to your GitHub Secrets.)*
-
 ## ⚠️ Security Warning
-This project is for **educational purposes only**. Even with a password, never expose this to the public for long periods. Use it in private repositories.
-
-## 🚀 How It Works
-- **Workflow A** runs at `00:00` and `12:00` UTC.
-- **Workflow B** runs at `06:00` and `18:00` UTC.
-- Each run starts a web server on port `8080` and tunnels it via ngrok.
-- `concurrency` with `cancel-in-progress: true` stops the previous run instantly.
-- Only the run triggered by the **schedule (cron)** calls the other workflow.
+This project is for **educational purposes only**. Use in private repositories.
 
 ## 📂 Project Structure
 ```
 
 .github/workflows/
 ├── a.yml
-└── b.yml
+├── b.yml
+└── c.yml
 web_shell.py
 README.md
 
 ```
 
-## 🛠 Prerequisites
-1. A **public repository** (to avoid GitHub's free minute limits for private repos).
-2. A free [ngrok](https://ngrok.com) account to get your **authtoken**.
-3. Add the ngrok token as a secret:
-   - Go to `Settings` → `Secrets and variables` → `Actions`.
-   - Name: `NGROK_AUTH_TOKEN` → Value: *your ngrok token*.
-
-## 🧪 How to Run
-
-### Option 1: Automatic (Wait for the Cron)
-1. Push all the files to your repository.
-2. Go to the **Actions** tab.
-3. Wait for the scheduled times (00:00, 06:00, 12:00, 18:00 UTC). The loop will start automatically.
-
-### Option 2: Manual Test
-1. Go to the **Actions** tab.
-2. Select **Workflow A** and click **Run workflow**.
-3. Select **Workflow B** and click **Run workflow** (a few minutes later).
-   *(Note: Manual runs will NOT trigger the other workflow because of the `if: github.event_name == 'schedule'` condition.)*
-
-## 👀 Accessing the Web Shell
-1. Open the running workflow log.
-2. Find the line that says:
-```
-
-✅ Web Shell URL: https://xxxx.ngrok.io
-
-```
-3. Open the URL in your browser.
-4. Enter the username (`admin`) and password (`admin123`).
-5. Type your shell commands (e.g., `ls -la`, `whoami`) and click **Execute**.
-
-## 🛑 Stopping the Loop
-To stop the infinite loop:
-- Delete or comment out the `schedule` section in `a.yml` and `b.yml`, OR
-- Disable the workflows in the Actions tab, OR
-- Archive/Delete the repository.
+## 🚀 How It Works
+- A and B run every 6 hours (cron).
+- Each starts a web shell and calls the other (if triggered by schedule).
+- C stops everything when you trigger it manually.
 
 ---
 **Author:** mikaeil297
+```
+
+---
+
+📌 How to Use Workflow C to Stop Everything
+
+1. Go to your repository on GitHub.
+2. Click the Actions tab.
+3. On the left sidebar, click Workflow C - Stopper.
+4. Click the Run workflow dropdown button.
+5. In the confirm field, type exactly: stop
+6. Click the Run workflow button.
+7. Workflow C will:
+   · Send a stop signal to both A and B.
+   · Cancel its own run.
+8. The next scheduled runs of A and B will see the stop signal and exit immediately.
+9. The infinite loop is completely broken.
+
+---
+
+✅ Summary of All 3 Workflows
+
+Workflow Purpose
+A Runs at 00:00 & 12:00 – starts web shell – triggers B
+B Runs at 06:00 & 18:00 – starts web shell – triggers A
+C Manual trigger – stops A and B – then self-destructs
+
+---
+
