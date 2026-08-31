@@ -1,0 +1,65 @@
+name: Deploy Web Shell with ngrok
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask
+
+    - name: Download ngrok v3
+      run: |
+        wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
+        unzip -q ngrok-v3-stable-linux-amd64.zip
+        chmod +x ngrok
+        rm ngrok-v3-stable-linux-amd64.zip
+
+    - name: Verify ngrok version
+      run: ./ngrok --version
+
+    - name: Authenticate ngrok (v3 method)
+      run: ./ngrok config add-authtoken ${{ secrets.NGROK_TOKEN }}
+
+    - name: Start Flask application in background
+      run: |
+        python web_shell.py > flask.log 2>&1 &
+        sleep 3
+
+    - name: Start ngrok tunnel
+      run: |
+        ./ngrok http 8080 --log=stdout --log-level=info > ngrok.log 2>&1 &
+        sleep 5
+
+    - name: Get public URL and display info
+      run: |
+        TUNNEL_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o '"public_url":"[^"]*' | head -1 | cut -d'"' -f4)
+        echo "===================================="
+        echo "✅ Web Shell is Live!"
+        echo "===================================="
+        echo "Public URL: $TUNNEL_URL"
+        echo "Username: admin (or set WEB_USER secret)"
+        echo "Password: admin123 (or set WEB_PASS secret)"
+        echo "===================================="
+
+    - name: Keep services running
+      run: sleep 3600
+
+    - name: Cleanup
+      if: always()
+      run: pkill -f "ngrok\|web_shell.py" || true
