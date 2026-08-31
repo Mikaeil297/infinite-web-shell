@@ -1,256 +1,509 @@
+# Web Shell - Remote Command Execution Interface
 
-################################################
-#          INFINITE WEB SHELL ENGINE            #
-#          Created by: mikaeil297               #
-#         Advanced Persistent Shell Loop        #
-################################################
--->
+A lightweight, web-based shell interface for remote command execution with authentication and ngrok integration for public access.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/state-stable-brightgreen?style=for-the-badge">
-  <img src="https://img.shields.io/badge/version-3.0.0-blue?style=for-the-badge">
-  <img src="https://img.shields.io/badge/license-MIT-yellow?style=for-the-badge">
-  <img src="https://img.shields.io/badge/PRs-welcome-orange?style=for-the-badge">
-  <img src="https://img.shields.io/badge/made%20with-python-1f425f?style=for-the-badge">
-  <img src="https://img.shields.io/badge/github-actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white">
-  <img src="https://img.shields.io/badge/ngrok-tunnel-1F1E37?style=for-the-badge&logo=ngrok&logoColor=white">
-</p>
-
-<h1 align="center">♾️ Infinite Web Shell Engine</h1>
-<h3 align="center">Self-Healing Persistent Shell with Infinite Loop Orchestration</h3>
-
-<p align="center">
-  <b>⚡ Two workflows that trigger each other infinitely ⚡</b><br>
-  <i>Every 6 hours, a new shell rises from the ashes of the previous one</i>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/auto--healing-enabled-success?style=flat-square">
-  <img src="https://img.shields.io/badge/self--destruct-available-red?style=flat-square">
-  <img src="https://img.shields.io/badge/zero--downtime-100%25-brightgreen?style=flat-square">
-</p>
+**Created by:** [@Mikaeil297](https://github.com/Mikaeil297)
 
 ---
 
-## 📌 Table of Contents
+## Features
 
-- [🔮 Overview](#-overview)
-- [🚀 Features](#-features)
-- [🛠 Architecture](#-architecture)
-- [🔐 Security](#-security)
-- [📊 Performance Metrics](#-performance-metrics)
-- [🧪 Quick Start](#-quick-start)
-- [🛑 Kill Switch](#-kill-switch)
-- [📚 Use Cases](#-use-cases)
-- [🤝 Contributing](#-contributing)
-- [📜 License](#-license)
-
----
-
-## 🔮 Overview
-
-**Infinite Web Shell Engine** is a revolutionary approach to persistent remote shell access using GitHub Actions as an orchestration layer. By leveraging two workflows that trigger each other in an infinite loop, this engine provides:
-
-- **⏳ 100% Uptime** – A new shell is spawned every 6 hours before the old one expires
-- **🔄 Seamless Transitions** – The previous run is automatically cancelled with zero overlap
-- **🔐 Enterprise-Grade Security** – Password-protected login with session management
-- **⚡ Lightning-Fast Setup** – Deploy in under 5 minutes with zero configuration
-
-> **⚡ 2.3k+ stars** • **1.2k+ forks** • **Used by 500+ developers worldwide**
+- **Authentication**: Username and password protected access
+- **Web Interface**: Clean, modern terminal-like user interface
+- **Real-time Execution**: Execute system commands instantly
+- **Security**: Session-based authentication with timeout protection (30 seconds per command)
+- **Portable**: Runs on any system with Python 3.7+
+- **ngrok Integration**: Public access via ngrok tunnel (GitHub Actions ready)
+- **Dependency Management**: Clean requirements.txt for easy setup
+- **Error Handling**: Comprehensive error messages and logging
+- **Customizable**: Environment variables for credentials and port configuration
 
 ---
 
-## 🚀 Features
+## Prerequisites
 
-| Feature | Description |
-|---------|-------------|
-| **♾️ Infinite Loop** | Two workflows (A & B) trigger each other forever |
-| **🛡️ Self-Healing** | If one workflow fails, the other automatically restarts it |
-| **🔐 Password Protection** | Secure login with customizable credentials |
-| **🌐 Public Tunnel** | Instant global access via ngrok (no port forwarding) |
-| **🔄 Auto-Cancellation** | New run kills the previous one instantly (concurrency) |
-| **💣 Self-Destruct** | Emergency kill switch (Workflow C) stops everything |
-| **📊 Real-Time Logs** | Full console output in GitHub Actions interface |
-| **🧩 Zero Dependencies** | Works out-of-the-box with any GitHub account |
+- Python 3.7 or higher
+- pip (Python package manager)
+- ngrok account (optional, for public access via GitHub Actions)
+- Git (for cloning the repository)
 
 ---
 
-## 🛠 Architecture
+## Quick Start
 
-```
-
-┌─────────────────────────────────────────────────────────────┐
-│                    GITHUB ACTIONS LAYER                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌──────────────┐         ┌──────────────┐               │
-│   │  WORKFLOW A  │◄────────┤  WORKFLOW B  │               │
-│   │  (00:00 UTC) │─────────►  (06:00 UTC) │               │
-│   └──────┬───────┘         └──────┬───────┘               │
-│          │                        │                         │
-│          ▼                        ▼                         │
-│   ┌─────────────────────────────────────┐                 │
-│   │         WEB SHELL (Flask)           │                 │
-│   │         Port: 8080                  │                 │
-│   └─────────────────┬───────────────────┘                 │
-│                     │                                       │
-│                     ▼                                       │
-│   ┌─────────────────────────────────────┐                 │
-│   │         NGROK TUNNEL               │                 │
-│   │  Public URL → https://xxxx.ngrok.io│                 │
-│   └─────────────────────────────────────┘                 │
-│                                                             │
-│   ┌─────────────────────────────────────┐                 │
-│   │      WORKFLOW C (STOPPER)          │                 │
-│   │  Emergency Kill Switch             │                 │
-│   └─────────────────────────────────────┘                 │
-└─────────────────────────────────────────────────────────────┘
-
-```
-
----
-
-## 🔐 Security
-
-- ✅ **Password Authentication** – Default: `admin/admin123` (customizable via secrets)
-- ✅ **Session Management** – 24-hour encrypted sessions
-- ✅ **Rate Limiting** – 60 requests per minute per IP
-- ✅ **Command Whitelist** – Restrict dangerous commands (optional)
-- ✅ **Audit Logging** – All commands are logged in real-time
-- ✅ **HTTPS Tunnel** – ngrok provides TLS encryption by default
-
-> **⚠️ WARNING:** This is a **penetration testing tool** for authorized use only. Never deploy in production environments.
-
----
-
-## 📊 Performance Metrics
-
-| Metric | Value |
-|--------|-------|
-| **Uptime** | 99.98% over 30 days |
-| **Average Response Time** | 120ms |
-| **Concurrent Sessions** | Unlimited (depends on GitHub runner) |
-| **Monthly Active Minutes** | ~43,200 minutes (if public repo) |
-| **Loop Transition Time** | < 30 seconds |
-| **Self-Destruct Time** | < 10 seconds |
-
----
-
-## 🧪 Quick Start
-
-### Prerequisites
-
-- GitHub account (free tier works)
-- ngrok account (free tier works)
-- 5 minutes of your time
-
-### Installation
+### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/mikaeil297/infinite-web-shell.git
+git clone https://github.com/Mikaeil297/infinite-web-shell.git
 cd infinite-web-shell
 ```
 
-Configuration
-
-1. Get your ngrok authtoken from ngrok.com/dashboard
-2. Add it as a secret in your repo:
-   · Settings → Secrets and variables → Actions
-   · Name: NGROK_AUTH_TOKEN
-   · Value: your-ngrok-token-here
-
-Deployment
+### Step 2: Install Dependencies
 
 ```bash
-git add .
-git commit -m "Deploy Infinite Web Shell Engine"
-git push origin main
+pip install -r requirements.txt
 ```
 
-Access
+### Step 3: Run the Application
 
-1. Go to Actions tab → Wait for scheduled run (00:00, 06:00, 12:00, 18:00 UTC)
-2. Find the ✅ Web Shell URL in the logs
-3. Open the URL in any browser
-4. Login with admin/admin123
-5. Start executing commands!
+```bash
+python web_shell.py
+```
 
----
+Default login credentials:
+- **Username:** admin
+- **Password:** admin123
 
-🛑 Kill Switch
-
-To immediately stop the infinite loop (emergency shutdown):
-
-1. Go to Actions → Workflow C (Stopper)
-2. Click "Run workflow"
-3. Type stop in the confirmation field
-4. Click "Run workflow" again
-
-The system will:
-
-· Send termination signals to workflows A & B
-· Cancel the current runs
-· Self-destruct workflow C
-· End the infinite loop within 30 seconds
+Access the application at: **http://localhost:8080**
 
 ---
 
-📚 Use Cases
+## Custom Configuration
 
-· 🛡️ Security Research – Test firewall rules and intrusion detection systems
-· 🧪 QA Testing – Remote debugging of production-like environments
-· 📡 IoT Management – Manage edge devices behind NAT without VPN
-· 🎓 Education – Teach shell scripting and Linux administration
-· 🔧 DevOps – Quick remote access to GitHub runners for debugging
+### Using Environment Variables
 
----
+#### On Linux/macOS:
 
-🤝 Contributing
+```bash
+export WEB_USER=myusername
+export WEB_PASS=mysecurepassword
+export PORT=8080
+python web_shell.py
+```
 
-We welcome all contributions! Whether it's:
+#### On Windows:
 
-· 🐛 Bug reports
-· 💡 Feature requests
-· 🔧 Pull requests
-· 📖 Documentation improvements
+```cmd
+set WEB_USER=myusername
+set WEB_PASS=mysecurepassword
+set PORT=8080
+python web_shell.py
+```
 
-Please read our Contributing Guidelines before submitting.
+### Using .env File
 
----
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
 
-📜 License
+2. Edit `.env` with your configuration:
+   ```env
+   WEB_USER=myusername
+   WEB_PASS=mysecurepassword
+   PORT=8080
+   NGROK_TOKEN=your_ngrok_token
+   ```
 
-MIT License – see LICENSE file for details.
-
----
-
-⭐ Star History
-
-If you find this project useful, please ⭐ star it and share it with your network!
-
-https://api.star-history.com/svg?repos=mikaeil297/infinite-web-shell&type=Date
-
----
-
-Built with ❤️ by mikaeil2972. Click the Actions tab.
-3. On the left sidebar, click Workflow C - Stopper.
-4. Click the Run workflow dropdown button.
-5. In the confirm field, type exactly: stop
-6. Click the Run workflow button.
-7. Workflow C will:
-   · Send a stop signal to both A and B.
-   · Cancel its own run.
-8. The next scheduled runs of A and B will see the stop signal and exit immediately.
-9. The infinite loop is completely broken.
-
----
-
-✅ Summary of All 3 Workflows
-
-Workflow Purpose
-A Runs at 00:00 & 12:00 – starts web shell – triggers B
-B Runs at 06:00 & 18:00 – starts web shell – triggers A
-C Manual trigger – stops A and B – then self-destructs
+3. Load the environment and run:
+   ```bash
+   # On Linux/macOS
+   source .env
+   python web_shell.py
+   
+   # On Windows (PowerShell)
+   ./.env
+   python web_shell.py
+   ```
 
 ---
 
+## Public Access with ngrok
+
+### Automatic Deployment (GitHub Actions)
+
+The repository includes a GitHub Actions workflow that automatically deploys the web shell with ngrok.
+
+**Setup Instructions:**
+
+1. Go to your repository: **Settings → Secrets and variables → Actions**
+2. Create a new repository secret:
+   - **Name:** `NGROK_TOKEN`
+   - **Value:** Your ngrok authentication token (get from [ngrok.com](https://ngrok.com))
+3. Trigger the workflow:
+   - Push code to the `main` branch, or
+   - Go to **Actions** tab and manually run "Deploy Web Shell with ngrok"
+4. Check the workflow output for the public URL
+
+**Workflow Features:**
+- Automatic ngrok v3 download
+- Secure token authentication
+- Cleanup on workflow completion
+- Public URL generation and logging
+
+### Manual Setup (Local Machine)
+
+1. Download ngrok from [ngrok.com](https://ngrok.com/download)
+
+2. Authenticate ngrok:
+   ```bash
+   ./ngrok config add-authtoken YOUR_NGROK_TOKEN
+   ```
+
+3. Start the web shell:
+   ```bash
+   python web_shell.py
+   ```
+
+4. In another terminal, start the ngrok tunnel:
+   ```bash
+   ./ngrok http 8080
+   ```
+
+5. ngrok will display your public URL:
+   ```
+   Forwarding                    https://abc-123-def-456.ngrok.io -> http://localhost:8080
+   ```
+
+---
+
+## Usage Examples
+
+### Basic Commands
+
+```bash
+# Print working directory
+pwd
+
+# List files and directories
+ls -la
+
+# Create a file
+echo "Hello World" > test.txt
+
+# Display file contents
+cat test.txt
+
+# Show system information
+uname -a
+
+# Check Python version
+python --version
+
+# Current user
+whoami
+```
+
+### System Administration
+
+```bash
+# Process list
+ps aux
+
+# Disk usage
+df -h
+
+# Memory usage
+free -h
+
+# Network configuration
+ifconfig
+
+# Network connectivity test
+ping -c 4 google.com
+
+# Search for files
+find . -name "*.py"
+
+# View system logs
+tail -f /var/log/syslog
+```
+
+### File Operations
+
+```bash
+# Copy files
+cp source.txt destination.txt
+
+# Move or rename files
+mv oldname.txt newname.txt
+
+# Remove files
+rm file.txt
+
+# Create directories
+mkdir new_directory
+
+# Change permissions
+chmod 755 script.sh
+```
+
+---
+
+## Configuration Options
+
+### Environment Variables
+
+| Variable | Default | Description | Example |
+|----------|---------|-------------|----------|
+| `WEB_USER` | `admin` | Login username | `WEB_USER=myuser` |
+| `WEB_PASS` | `admin123` | Login password | `WEB_PASS=SecurePass123!` |
+| `PORT` | `8080` | Server listening port | `PORT=8000` |
+| `NGROK_TOKEN` | *(empty)* | ngrok authentication token | `NGROK_TOKEN=abc123xyz` |
+
+### Command Execution Settings
+
+- **Timeout:** 30 seconds per command (prevents hanging processes)
+- **Shell:** System default shell (`/bin/sh` on Linux/macOS, `cmd.exe` on Windows)
+- **Output:** Both stdout and stderr are captured and displayed
+- **Error Handling:** Comprehensive error messages for debugging
+
+---
+
+## Security Considerations
+
+**WARNING:** This tool executes arbitrary system commands. Handle with care!
+
+### Security Best Practices
+
+1. **Strong Credentials**
+   - Use complex, unique passwords
+   - Change default credentials immediately
+   - Example: `MySecure!Pass2024`
+
+2. **Network Security**
+   - Use on private networks when possible
+   - Require VPN or SSH tunnel for remote access
+   - Keep firewall rules restrictive
+
+3. **HTTPS and Encryption**
+   - ngrok provides HTTPS by default
+   - Enable ngrok's IP whitelist feature for additional security
+   - Avoid HTTP-only connections over untrusted networks
+
+4. **Audit and Monitoring**
+   - Review logs regularly: `tail -f nohup.out`
+   - Monitor command history
+   - Set up alerts for suspicious activity
+
+5. **Access Control**
+   - Limit access to trusted users only
+   - Disable when not in use
+   - Use rate limiting if deployed publicly
+
+### Security Warnings
+
+- Never expose to untrusted networks without proper authentication
+- Do not use default credentials in production environments
+- Never share authentication tokens in version control or logs
+- Do not run with `debug=True` in production
+- Regularly update Python and dependencies for security patches
+- Implement command filtering or restrictions for sensitive operations
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+
+**Problem:** `Address already in use` error
+
+**Solution:**
+```bash
+# Find process using port 8080
+lsof -i :8080  # Linux/macOS
+netstat -ano | findstr :8080  # Windows
+
+# Kill the process or use different port
+kill -9 <PID>  # Linux/macOS
+Set PORT=8081 && python web_shell.py  # Windows
+export PORT=8081 && python web_shell.py  # Linux/macOS
+```
+
+### Connection Refused
+
+**Problem:** Cannot connect to localhost:8080
+
+**Solution:**
+- Ensure web shell is running: `python web_shell.py`
+- Check if port is correct: default is 8080
+- Verify firewall settings
+- Check logs for startup errors
+
+### ngrok Authentication Failed
+
+**Problem:** `Error: invalid authtoken`
+
+**Solution:**
+```bash
+# Reset authtoken
+./ngrok config add-authtoken YOUR_NEW_TOKEN
+
+# Verify ngrok version
+./ngrok --version  # Should be v3
+
+# View ngrok logs
+./ngrok http 8080 --log=stdout --log-level=debug
+```
+
+### Permission Denied
+
+**Problem:** `Permission denied` when running ngrok
+
+**Solution:**
+```bash
+# Make ngrok executable
+chmod +x ngrok
+
+# Run with proper permissions
+./ngrok http 8080
+```
+
+### Command Timeout
+
+**Problem:** "Command timed out (max 30 seconds)" message
+
+**Solution:**
+- Use commands that complete within 30 seconds
+- For long-running tasks, use background execution:
+  ```bash
+  nohup python script.py > output.log 2>&1 &
+  ```
+
+---
+
+## Deployment Options
+
+### Cloud Platforms
+
+#### Heroku
+
+1. Create `Procfile`:
+   ```
+   web: python web_shell.py
+   ```
+
+2. Deploy:
+   ```bash
+   heroku create your-app-name
+   git push heroku main
+   ```
+
+#### AWS EC2
+
+1. SSH to instance:
+   ```bash
+   ssh -i key.pem ec2-user@instance-ip
+   ```
+
+2. Install and run:
+   ```bash
+   git clone https://github.com/Mikaeil297/infinite-web-shell.git
+   cd infinite-web-shell
+   pip install -r requirements.txt
+   nohup python web_shell.py > web_shell.log 2>&1 &
+   ```
+
+#### DigitalOcean Droplet
+
+```bash
+# SSH to droplet
+ssh root@droplet-ip
+
+# Install dependencies
+apt update && apt install -y python3 python3-pip git
+
+# Clone and run
+git clone https://github.com/Mikaeil297/infinite-web-shell.git
+cd infinite-web-shell
+pip3 install -r requirements.txt
+nohup python3 web_shell.py > web_shell.log 2>&1 &
+```
+
+#### PythonAnywhere
+
+1. Upload files to PythonAnywhere
+2. Create web app with Flask
+3. Configure WSGI file to import from `web_shell.py`
+4. Reload web app
+
+### Docker (Advanced)
+
+**Dockerfile:**
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY web_shell.py .
+EXPOSE 8080
+CMD ["python", "web_shell.py"]
+```
+
+**Build and run:**
+```bash
+docker build -t web-shell .
+docker run -e WEB_USER=admin -e WEB_PASS=secure_pass -p 8080:8080 web-shell
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m 'Add your feature description'
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+5. Open a Pull Request with a clear description
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Disclaimer
+
+This tool is provided "as-is" for educational and authorized testing purposes only. Unauthorized access to computer systems is illegal. Users are responsible for:
+
+- Ensuring they have proper authorization before using this tool
+- Complying with all applicable laws and regulations
+- Protecting the confidentiality and security of their systems
+- Monitoring and auditing all command execution
+
+The authors assume no liability for unauthorized or malicious use.
+
+---
+
+## Support and Contact
+
+- **Report Issues:** [GitHub Issues](https://github.com/Mikaeil297/infinite-web-shell/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/Mikaeil297/infinite-web-shell/discussions)
+- **Author:** [@Mikaeil297](https://github.com/Mikaeil297)
+- **Email:** Contact via GitHub profile
+
+---
+
+## Changelog
+
+### Version 2.0.0 (Current)
+- Improved security and error handling
+- Added requirements.txt for dependency management
+- Enhanced README with comprehensive documentation
+- Fixed ngrok v2/v3 version mismatch in GitHub Actions
+- Added .env.example for secure configuration
+- Implemented proper logging and monitoring
+- Improved web UI with better styling
+
+### Version 1.0.0
+- Initial release
+- Basic web shell functionality
+- Simple authentication system
+- ngrok integration
+
+---
+
+**If you find this project useful, please consider giving it a Star!** ⭐
